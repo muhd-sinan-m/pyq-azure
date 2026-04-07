@@ -1,420 +1,1126 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
-    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Upload Paper - PYQ Portal</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style-combined.css') }}">
-</head>
-<body class="upload-page">
-  <!-- ==================== HEADER ==================== -->
-<header class="main-header">
-    <div class="container-fluid">
-        <div class="unified-header">
-            <!-- Left: College Branding -->
-            <div class="college-brand">
-                <img src="{{ url_for('static', filename='marian-college-header.png') }}" 
-                     alt="Marian College Kuttikkanam" 
-                     class="college-logo">
-            </div>
-
-            <!-- Center: Portal Branding -->
-            <div class="portal-brand">
-                <div class="portal-logo">
-                    <svg width="36" height="36" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <defs>
-                            <linearGradient id="lgMark" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
-                                <stop offset="0%" stop-color="#3B82F6"/>
-                                <stop offset="100%" stop-color="#8B5CF6"/>
-                            </linearGradient>
-                        </defs>
-                        <path d="M20 10 C14 10 8 12 8 14 L8 30 C8 30 14 28 20 30 Z" fill="url(#lgMark)" opacity="0.9"/>
-                        <path d="M20 10 C26 10 32 12 32 14 L32 30 C32 30 26 28 20 30 Z" fill="url(#lgMark)" opacity="0.6"/>
-                        <line x1="20" y1="10" x2="20" y2="30" stroke="white" stroke-width="1.5" stroke-linecap="round" opacity="0.8"/>
-                        <circle cx="32" cy="10" r="3" fill="#F59E0B"/>
-                        <path d="M32 8.2 L32.5 9.5 L34 9.5 L32.8 10.4 L33.2 11.8 L32 11 L30.8 11.8 L31.2 10.4 L30 9.5 L31.5 9.5 Z" fill="white" opacity="0.9"/>
-                    </svg>
+    <head>
+        <link
+            rel="icon"
+            type="image/x-icon"
+            href="{{ url_for('static', filename='favicon.ico') }}"
+        />
+        <link
+            rel="icon"
+            type="image/svg+xml"
+            href="{{ url_for('static', filename='favicon.svg') }}"
+        />
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Upload Papers - PYQ Portal</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap"
+            rel="stylesheet"
+        />
+        <link
+            rel="stylesheet"
+            href="{{ url_for('static', filename='style.css') }}"
+        />
+        <link
+            rel="stylesheet"
+            href="{{ url_for('static', filename='style-combined.css') }}"
+        />
+        <style>
+            /* ── Bulk Upload Specific Styles ── */
+            .paper-entry {
+                border: 1.5px solid #e2e8f0;
+                border-radius: 12px;
+                padding: 20px 24px;
+                margin-bottom: 18px;
+                position: relative;
+                background: #f8fafc;
+                transition: border-color 0.2s;
+            }
+            .paper-entry:focus-within {
+                border-color: #3b82f6;
+                background: #fff;
+            }
+            .paper-entry-header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                margin-bottom: 16px;
+            }
+            .paper-entry-title {
+                font-weight: 600;
+                font-size: 0.95rem;
+                color: #1e293b;
+            }
+            .btn-remove-entry {
+                background: none;
+                border: none;
+                cursor: pointer;
+                color: #ef4444;
+                padding: 4px 8px;
+                border-radius: 6px;
+                font-size: 0.82rem;
+                display: flex;
+                align-items: center;
+                gap: 4px;
+                transition: background 0.15s;
+            }
+            .btn-remove-entry:hover {
+                background: #fee2e2;
+            }
+            .btn-remove-entry:disabled {
+                opacity: 0.35;
+                cursor: not-allowed;
+            }
+            .btn-add-entry {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                background: none;
+                border: 2px dashed #3b82f6;
+                color: #3b82f6;
+                border-radius: 10px;
+                padding: 12px 20px;
+                font-size: 0.95rem;
+                font-weight: 600;
+                cursor: pointer;
+                width: 100%;
+                justify-content: center;
+                margin-top: 4px;
+                transition: background 0.15s;
+            }
+            .btn-add-entry:hover {
+                background: rgba(59, 130, 246, 0.06);
+            }
+            .upload-summary {
+                background: #f0f9ff;
+                border: 1px solid #bae6fd;
+                border-radius: 10px;
+                padding: 14px 18px;
+                margin-bottom: 18px;
+                font-size: 0.92rem;
+                color: #0369a1;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+            .file-label-small {
+                display: inline-block;
+                padding: 7px 14px;
+                border: 1.5px solid #cbd5e1;
+                border-radius: 8px;
+                cursor: pointer;
+                font-size: 0.87rem;
+                color: #475569;
+                background: #fff;
+                transition:
+                    border-color 0.2s,
+                    background 0.2s;
+            }
+            .file-label-small:hover {
+                border-color: #3b82f6;
+                background: #f0f7ff;
+                color: #3b82f6;
+            }
+            .file-name-small {
+                font-size: 0.85rem;
+                color: #64748b;
+                margin-left: 8px;
+                vertical-align: middle;
+            }
+            .file-name-small.has-file {
+                color: #16a34a;
+                font-weight: 500;
+            }
+            .results-list {
+                list-style: none;
+                padding: 0;
+                margin: 0;
+            }
+            .results-list li {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                padding: 5px 0;
+                font-size: 0.9rem;
+            }
+            .results-list li.ok {
+                color: #16a34a;
+            }
+            .results-list li.fail {
+                color: #dc2626;
+            }
+            .bulk-progress {
+                display: none;
+                margin-top: 12px;
+            }
+            .bulk-progress progress {
+                width: 100%;
+                height: 6px;
+                border-radius: 3px;
+            }
+        </style>
+    </head>
+    <body class="upload-page">
+        <!-- ==================== HEADER ==================== -->
+        <header class="main-header">
+            <div class="container-fluid">
+                <div class="unified-header">
+                    <div class="college-brand">
+                        <img
+                            src="{{ url_for('static', filename='marian-college-header.png') }}"
+                            alt="Marian College Kuttikkanam"
+                            class="college-logo"
+                        />
+                    </div>
+                    <div class="portal-brand">
+                        <div class="portal-logo">
+                            <svg
+                                width="36"
+                                height="36"
+                                viewBox="0 0 40 40"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                            >
+                                <defs>
+                                    <linearGradient
+                                        id="lgMark"
+                                        x1="0"
+                                        y1="0"
+                                        x2="40"
+                                        y2="40"
+                                        gradientUnits="userSpaceOnUse"
+                                    >
+                                        <stop
+                                            offset="0%"
+                                            stop-color="#3B82F6"
+                                        />
+                                        <stop
+                                            offset="100%"
+                                            stop-color="#8B5CF6"
+                                        />
+                                    </linearGradient>
+                                </defs>
+                                <path
+                                    d="M20 10 C14 10 8 12 8 14 L8 30 C8 30 14 28 20 30 Z"
+                                    fill="url(#lgMark)"
+                                    opacity="0.9"
+                                />
+                                <path
+                                    d="M20 10 C26 10 32 12 32 14 L32 30 C32 30 26 28 20 30 Z"
+                                    fill="url(#lgMark)"
+                                    opacity="0.6"
+                                />
+                                <line
+                                    x1="20"
+                                    y1="10"
+                                    x2="20"
+                                    y2="30"
+                                    stroke="white"
+                                    stroke-width="1.5"
+                                    stroke-linecap="round"
+                                    opacity="0.8"
+                                />
+                                <circle cx="32" cy="10" r="3" fill="#F59E0B" />
+                                <path
+                                    d="M32 8.2 L32.5 9.5 L34 9.5 L32.8 10.4 L33.2 11.8 L32 11 L30.8 11.8 L31.2 10.4 L30 9.5 L31.5 9.5 Z"
+                                    fill="white"
+                                    opacity="0.9"
+                                />
+                            </svg>
+                        </div>
+                        <div class="portal-text">
+                            <h1 class="portal-title">PYQ Portal</h1>
+                            <p class="portal-subtitle">
+                                Previous Year Question Papers
+                            </p>
+                        </div>
+                    </div>
+                    <div class="header-actions">
+                        <nav class="main-nav">
+                            <ul class="nav-list">
+                                <li>
+                                    <a
+                                        href="{{ url_for('home') }}"
+                                        class="nav-link"
+                                        >Home</a
+                                    >
+                                </li>
+                                <li>
+                                    <a
+                                        href="{{ url_for('view_papers') }}"
+                                        class="nav-link"
+                                        >Browse</a
+                                    >
+                                </li>
+                                {% if session.get('role') == 'admin' %}
+                                <li>
+                                    <a
+                                        href="{{ url_for('upload_page') }}"
+                                        class="nav-link active"
+                                        >Upload</a
+                                    >
+                                </li>
+                                {% endif %}
+                                <li>
+                                    <a
+                                        href="{{ url_for('about') }}"
+                                        class="nav-link"
+                                        >About</a
+                                    >
+                                </li>
+                            </ul>
+                        </nav>
+                        <div class="header-user">
+                            <button
+                                class="icon-btn"
+                                onclick="openPopup('help')"
+                                title="Help"
+                            >
+                                <svg
+                                    width="18"
+                                    height="18"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                >
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <path
+                                        d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"
+                                    ></path>
+                                    <line
+                                        x1="12"
+                                        y1="17"
+                                        x2="12.01"
+                                        y2="17"
+                                    ></line>
+                                </svg>
+                            </button>
+                            <button
+                                class="icon-btn"
+                                onclick="openPopup('contact')"
+                                title="Contact"
+                            >
+                                <svg
+                                    width="18"
+                                    height="18"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                >
+                                    <path
+                                        d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"
+                                    />
+                                    <polyline points="22,6 12,13 2,6" />
+                                </svg>
+                            </button>
+                            {% if session.get('user_id') %}
+                            <div class="user-menu desktop-only">
+                                <span class="user-name"
+                                    >{{ session.username }}</span
+                                >
+                                <a
+                                    href="{{ url_for('logout') }}"
+                                    class="btn-logout"
+                                    >Logout</a
+                                >
+                            </div>
+                            {% else %}
+                            <a
+                                href="{{ url_for('login') }}"
+                                class="btn-login desktop-only"
+                                >Login</a
+                            >
+                            {% endif %}
+                        </div>
+                    </div>
+                    <button class="mobile-menu-toggle" id="mobileMenuToggle">
+                        <span></span><span></span><span></span>
+                    </button>
                 </div>
-                <div class="portal-text">
-                    <h1 class="portal-title">PYQ Portal</h1>
-                    <p class="portal-subtitle">Previous Year Question Papers</p>
-                </div>
-            </div>
-
-            <!-- Right: Navigation & Actions -->
-            <div class="header-actions">
-                <nav class="main-nav">
-                    <ul class="nav-list">
-                        <li><a href="{{ url_for('home') }}" class="nav-link active">Home</a></li>
-                        <li><a href="{{ url_for('view_papers') }}" class="nav-link">Browse</a></li>
+                <div class="mobile-nav" id="mobileNav">
+                    <nav>
+                        <a href="{{ url_for('home') }}" class="mobile-nav-link"
+                            >Home</a
+                        >
+                        <a
+                            href="{{ url_for('view_papers') }}"
+                            class="mobile-nav-link"
+                            >Browse Papers</a
+                        >
                         {% if session.get('role') == 'admin' %}
-                        <li><a href="{{ url_for('upload_page') }}" class="nav-link">Upload</a></li>
+                        <a
+                            href="{{ url_for('upload_page') }}"
+                            class="mobile-nav-link"
+                            >Upload</a
+                        >
                         {% endif %}
-                        <li><a href="{{ url_for('about') }}" class="nav-link">About</a></li>
-                    </ul>
-                </nav>
-                <div class="header-user">
-                    <button class="icon-btn" onclick="openPopup('help')" title="Help">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
-                            <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                        </svg>
-                    </button>
-                    <button class="icon-btn" onclick="openPopup('contact')" title="Contact">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-                            <polyline points="22,6 12,13 2,6"/>
-                        </svg>
-                    </button>
-                    {% if session.get('user_id') %}
-                    <div class="user-menu desktop-only">
-                        <span class="user-name">{{ session.username }}</span>
-                        <a href="{{ url_for('logout') }}" class="btn-logout">Logout</a>
-                    </div>
-                    {% else %}
-                    <a href="{{ url_for('login') }}" class="btn-login desktop-only">Login</a>
-                    {% endif %}
-                </div>
-            </div>
-
-            <!-- Mobile Menu Toggle -->
-            <button class="mobile-menu-toggle" id="mobileMenuToggle">
-                <span></span>
-                <span></span>
-                <span></span>
-            </button>
-        </div>
-
-        <!-- Mobile Navigation -->
-        <div class="mobile-nav" id="mobileNav">
-            <nav>
-                <a href="{{ url_for('home') }}" class="mobile-nav-link">Home</a>
-                <a href="{{ url_for('view_papers') }}" class="mobile-nav-link">Browse Papers</a>
-                {% if session.get('role') == 'admin' %}
-                <a href="{{ url_for('upload_page') }}" class="mobile-nav-link">Upload</a>
-                {% endif %}
-                <a href="{{ url_for('about') }}" class="mobile-nav-link">About</a>
-                <hr class="mobile-nav-divider">
-                <button class="mobile-nav-link" onclick="openPopup('help')">Help</button>
-                <button class="mobile-nav-link" onclick="openPopup('contact')">Contact</button>
-                {% if session.get('user_id') %}
-                <hr class="mobile-nav-divider">
-                <span class="mobile-nav-user">{{ session.username }}</span>
-                <a href="{{ url_for('logout') }}" class="mobile-nav-link mobile-nav-logout">Logout</a>
-                {% else %}
-                <hr class="mobile-nav-divider">
-                <a href="{{ url_for('login') }}" class="mobile-nav-link mobile-nav-login">Login</a>
-                {% endif %}
-            </nav>
-        </div>
-    </div>
-</header>
-
-    <!-- ==================== PAGE HEADER ==================== -->
-    <section class="page-header">
-        <div class="container">
-            <div class="breadcrumb">
-                <a href="{{ url_for('home') }}">Home</a>
-                <span class="breadcrumb-separator">/</span>
-                <span class="breadcrumb-current">Upload Paper</span>
-            </div>
-            <h1 class="page-title">Upload Question Paper</h1>
-            <p class="page-description">
-                Contribute to our academic community by sharing previous year question papers
-            </p>
-        </div>
-    </section>
-
-    <!-- ==================== UPLOAD SECTION ==================== -->
-    <section class="upload-section">
-        <div class="container">
-            <div class="upload-layout">
-
-                <!-- Upload Form -->
-                <div class="upload-form-wrapper">
-                    <div class="upload-card">
-                        {% if error %}
-                        <div class="error-alert" id="errorAlert">
-                            <strong>Error:</strong> {{ error }}
-                        </div>
-                        {% endif %}
-                        {% with messages = get_flashed_messages() %}
-                        {% if messages %}
-                        <div class="success-alert" id="successAlert">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                                <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                            </svg>
-                            <div>
-                                <strong>Success!</strong>
-                                <p>{{ messages[0] }}</p>
-                            </div>
-                        </div>
+                        <a href="{{ url_for('about') }}" class="mobile-nav-link"
+                            >About</a
+                        >
+                        <hr class="mobile-nav-divider" />
+                        <button
+                            class="mobile-nav-link"
+                            onclick="openPopup('help')"
+                        >
+                            Help
+                        </button>
+                        <button
+                            class="mobile-nav-link"
+                            onclick="openPopup('contact')"
+                        >
+                            Contact
+                        </button>
+                        {% if session.get('user_id') %}
+                        <hr class="mobile-nav-divider" />
+                        <span class="mobile-nav-user"
+                            >{{ session.username }}</span
+                        >
+                        <a
+                            href="{{ url_for('logout') }}"
+                            class="mobile-nav-link mobile-nav-logout"
+                            >Logout</a
+                        >
                         {% else %}
-                        <div class="success-alert" id="successAlert" style="display: none;">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                                <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                            </svg>
-                            <div>
-                                <strong>Success!</strong>
-                                <p>Your question paper has been uploaded successfully and is under review.</p>
-                            </div>
-                        </div>
+                        <hr class="mobile-nav-divider" />
+                        <a
+                            href="{{ url_for('login') }}"
+                            class="mobile-nav-link mobile-nav-login"
+                            >Login</a
+                        >
                         {% endif %}
-                        {% endwith %}
+                    </nav>
+                </div>
+            </div>
+        </header>
 
-                        <form id="uploadForm" method="POST" action="/upload" enctype="multipart/form-data">
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label class="form-label" for="uploadSubject">
-                                        Subject <span class="required">*</span>
-                                    </label>
-                                    <select id="uploadSubject" name="subject_id" class="form-control" required>
-                                        <option value="">Select Subject</option>
-                                        {% for s in subjects|default([]) %}
-                                        <option value="{{ s.subject_id }}">{{ s.subject_name }}{% if s.semester %} (Sem {{ s.semester }}){% endif %}</option>
-                                        {% endfor %}
-                                    </select>
-                                    <span class="error-message" id="subjectError"></span>
+        <!-- ==================== PAGE HEADER ==================== -->
+        <section class="page-header">
+            <div class="container">
+                <div class="breadcrumb">
+                    <a href="{{ url_for('home') }}">Home</a>
+                    <span class="breadcrumb-separator">/</span>
+                    <span class="breadcrumb-current">Upload Papers</span>
+                </div>
+                <h1 class="page-title">Upload Question Papers</h1>
+                <p class="page-description">
+                    Upload multiple question papers across different subjects in
+                    one go
+                </p>
+            </div>
+        </section>
+
+        <!-- ==================== UPLOAD SECTION ==================== -->
+        <section class="upload-section">
+            <div class="container">
+                <div class="upload-layout">
+                    <!-- Upload Form -->
+                    <div class="upload-form-wrapper">
+                        <div class="upload-card">
+                            {% if error %}
+                            <div class="error-alert" id="errorAlert">
+                                <strong>Error:</strong> {{ error }}
+                            </div>
+                            {% endif %} {% with messages =
+                            get_flashed_messages(with_categories=true) %} {% if
+                            messages %}
+                            <div class="success-alert" id="successAlert">
+                                <svg
+                                    width="20"
+                                    height="20"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                >
+                                    <path
+                                        d="M22 11.08V12a10 10 0 1 1-5.93-9.14"
+                                    ></path>
+                                    <polyline
+                                        points="22 4 12 14.01 9 11.01"
+                                    ></polyline>
+                                </svg>
+                                <div>
+                                    {% for category, message in messages %}
+                                    <strong
+                                        >{% if category == 'error' %}Error{%
+                                        else %}Success!{% endif %}</strong
+                                    >
+                                    <p>{{ message }}</p>
+                                    {% endfor %}
                                 </div>
+                            </div>
+                            {% endif %} {% endwith %}
 
-                                <div class="form-group">
-                                    <label class="form-label" for="uploadYear">
-                                        Year <span class="required">*</span>
-                                    </label>
-                                    <select id="uploadYear" name="year" class="form-control" required>
-                                        <option value="">Select Year</option>
-                                        <option value="2024">2024</option>
-                                        <option value="2025">2025</option>
-                                        <option value="2026">2026</option>
-                                    </select>
-                                    <span class="error-message" id="yearError"></span>
+                            <!-- Bulk upload results (shown after AJAX submit) -->
+                            <div
+                                id="bulkResultBox"
+                                style="display: none"
+                                class="success-alert"
+                            >
+                                <div>
+                                    <strong id="bulkResultTitle"></strong>
+                                    <ul
+                                        class="results-list"
+                                        id="bulkResultList"
+                                    ></ul>
                                 </div>
                             </div>
 
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label class="form-label" for="uploadSemester">
-                                        Semester <span class="required">*</span>
-                                    </label>
-                                    <select id="uploadSemester" name="semester" class="form-control" required>
-                                        <option value="">Select Semester</option>
-                                        <option value="1">Semester 1</option>
-                                        <option value="2">Semester 2</option>
-                                        <option value="3">Semester 3</option>
-                                        <option value="4">Semester 4</option>
-                                        <option value="5">Semester 5</option>
-                                        <option value="6">Semester 6</option>
-                                        <option value="7">Semester 7</option>
-                                        <option value="8">Semester 8</option>
-                                    </select>
-                                    <span class="error-message" id="semesterError"></span>
-                                </div>
-
-                                <div class="form-group">
-                                    <label class="form-label" for="uploadDepartment">
-                                        Department <span class="required">*</span>
-                                    </label>
-                                    <select id="uploadDepartment" name="department" class="form-control" required>
-                                        <option value="">Select Department</option>
-                                        <option value="BCA">BCA</option>
-                                    </select>
-                                    <span class="error-message" id="departmentError"></span>
-                                </div>
-                            </div>
-
-                            <div class="form-group">
-                                <label class="form-label" for="uploadExamType">
-                                    Exam Type <span class="required">*</span>
-                                </label>
-                                <select id="uploadExamType" name="examType" class="form-control" required>
-                                    <option value="">Select Exam Type</option>
-                                    <option value="SEA II">SEA II</option>
-                                    <option value="SEA I">SEA I</option>
-                                    <option value="ISA">ISA</option>
-                                </select>
-                                <span class="error-message" id="examTypeError"></span>
-                            </div>
-
-                            <div class="form-group">
-                                <label class="form-label">
-                                    Upload PDF File <span class="required">*</span>
-                                </label>
-                                <div class="file-upload-area" id="fileUploadArea">
-                                    <input type="file" id="uploadFile" name="file" accept=".pdf" required hidden>
-                                    <div class="file-upload-content">
-                                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                            <polyline points="17 8 12 3 7 8"></polyline>
-                                            <line x1="12" y1="3" x2="12" y2="15"></line>
-                                        </svg>
-                                        <h4>Click to upload or drag and drop</h4>
-                                        <p>PDF files only (Max size: 10MB)</p>
-                                    </div>
-                                    <div class="file-selected" id="fileSelected" style="display: none;">
-                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                            <polyline points="14 2 14 8 20 8"></polyline>
-                                        </svg>
-                                        <div class="file-info">
-                                            <span class="file-name" id="fileName"></span>
-                                            <span class="file-size" id="fileSize"></span>
-                                        </div>
-                                        <button type="button" class="btn-remove-file" id="removeFile">
-                                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                                <line x1="18" y1="6" x2="6" y2="18"></line>
-                                                <line x1="6" y1="6" x2="18" y2="18"></line>
-                                            </svg>
-                                        </button>
-                                    </div>
-                                </div>
-                                <span class="error-message" id="fileError"></span>
-                            </div>
-
-                            <div class="form-group">
-                                <label class="form-label" for="uploadNotes">
-                                    Additional Notes (Optional)
-                                </label>
-                                <textarea id="uploadNotes" name="notes" class="form-control" rows="4" placeholder="Any additional information about this paper..."></textarea>
-                            </div>
-
-                            <div class="form-actions">
-                                <button type="button" class="btn btn-secondary" onclick="window.location.href='{{ url_for('view_papers') }}'">
-                                    Cancel
-                                </button>
-                                <button type="submit" class="btn btn-primary">
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                        <polyline points="17 8 12 3 7 8"></polyline>
-                                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                            <form id="uploadForm" enctype="multipart/form-data">
+                                <div class="upload-summary" id="uploadSummary">
+                                    <svg
+                                        width="18"
+                                        height="18"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        stroke-width="2"
+                                    >
+                                        <path
+                                            d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+                                        ></path>
+                                        <polyline
+                                            points="14 2 14 8 20 8"
+                                        ></polyline>
                                     </svg>
-                                    Upload Paper
+                                    <span id="summaryText"
+                                        >1 paper ready to upload</span
+                                    >
+                                </div>
+
+                                <!-- Paper entries container -->
+                                <div id="paperEntries"></div>
+
+                                <button
+                                    type="button"
+                                    class="btn-add-entry"
+                                    id="addEntryBtn"
+                                    onclick="addPaperEntry()"
+                                >
+                                    <svg
+                                        width="18"
+                                        height="18"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        stroke-width="2.5"
+                                    >
+                                        <line
+                                            x1="12"
+                                            y1="5"
+                                            x2="12"
+                                            y2="19"
+                                        ></line>
+                                        <line
+                                            x1="5"
+                                            y1="12"
+                                            x2="19"
+                                            y2="12"
+                                        ></line>
+                                    </svg>
+                                    Add Another Paper
                                 </button>
-                            </div>
-                        </form>
+
+                                <div class="bulk-progress" id="bulkProgress">
+                                    <progress
+                                        id="progressBar"
+                                        value="0"
+                                        max="100"
+                                    ></progress>
+                                    <p
+                                        style="
+                                            font-size: 0.85rem;
+                                            color: #64748b;
+                                            margin-top: 6px;
+                                        "
+                                        id="progressText"
+                                    >
+                                        Uploading…
+                                    </p>
+                                </div>
+
+                                <div
+                                    class="form-actions"
+                                    style="margin-top: 24px"
+                                >
+                                    <button
+                                        type="button"
+                                        class="btn btn-secondary"
+                                        onclick="window.location.href='{{ url_for('view_papers') }}'"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="btn btn-primary"
+                                        id="submitBtn"
+                                        onclick="submitBulkUpload()"
+                                    >
+                                        <svg
+                                            width="18"
+                                            height="18"
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            stroke="currentColor"
+                                        >
+                                            <path
+                                                d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+                                            ></path>
+                                            <polyline
+                                                points="17 8 12 3 7 8"
+                                            ></polyline>
+                                            <line
+                                                x1="12"
+                                                y1="3"
+                                                x2="12"
+                                                y2="15"
+                                            ></line>
+                                        </svg>
+                                        Upload All Papers
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Guidelines Sidebar -->
+                    <div class="guidelines-sidebar">
+                        <div class="guideline-card">
+                            <h3>Upload Guidelines</h3>
+                            <ul class="guideline-list">
+                                <li>
+                                    <svg
+                                        width="16"
+                                        height="16"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                    >
+                                        <polyline
+                                            points="20 6 9 17 4 12"
+                                        ></polyline>
+                                    </svg>
+                                    Only upload authentic question papers
+                                </li>
+                                <li>
+                                    <svg
+                                        width="16"
+                                        height="16"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                    >
+                                        <polyline
+                                            points="20 6 9 17 4 12"
+                                        ></polyline>
+                                    </svg>
+                                    Ensure the PDF is clear and readable
+                                </li>
+                                <li>
+                                    <svg
+                                        width="16"
+                                        height="16"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                    >
+                                        <polyline
+                                            points="20 6 9 17 4 12"
+                                        ></polyline>
+                                    </svg>
+                                    Each file should not exceed 10MB
+                                </li>
+                                <li>
+                                    <svg
+                                        width="16"
+                                        height="16"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                    >
+                                        <polyline
+                                            points="20 6 9 17 4 12"
+                                        ></polyline>
+                                    </svg>
+                                    Fill all required fields for every paper
+                                </li>
+                                <li>
+                                    <svg
+                                        width="16"
+                                        height="16"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                    >
+                                        <polyline
+                                            points="20 6 9 17 4 12"
+                                        ></polyline>
+                                    </svg>
+                                    You can upload papers for different subjects
+                                    at once
+                                </li>
+                            </ul>
+                        </div>
+
+                        <div class="guideline-card info-card">
+                            <svg
+                                width="24"
+                                height="24"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                            >
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="16" x2="12" y2="12"></line>
+                                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                            </svg>
+                            <h4>Need Help?</h4>
+                            <p>
+                                If you face any issues while uploading, please
+                                contact the academic office or email us at
+                                pyqportalhelp@gmail.com
+                            </p>
+                        </div>
                     </div>
                 </div>
+            </div>
+        </section>
 
-                <!-- Guidelines Sidebar -->
-                <div class="guidelines-sidebar">
-                    <div class="guideline-card">
-                        <h3>Upload Guidelines</h3>
-                        <ul class="guideline-list">
-                            <li>
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                    <polyline points="20 6 9 17 4 12"></polyline>
-                                </svg>
-                                Only upload authentic question papers
-                            </li>
-                            <li>
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                    <polyline points="20 6 9 17 4 12"></polyline>
-                                </svg>
-                                Ensure the PDF is clear and readable
-                            </li>
-                            <li>
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                    <polyline points="20 6 9 17 4 12"></polyline>
-                                </svg>
-                                File size should not exceed 10MB
-                            </li>
-                            <li>
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                    <polyline points="20 6 9 17 4 12"></polyline>
-                                </svg>
-                                Fill all required fields accurately
-                            </li>
-                            <li>
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                    <polyline points="20 6 9 17 4 12"></polyline>
-                                </svg>
-                                Papers will be verified before publishing
-                            </li>
-                        </ul>
+        <!-- ==================== FOOTER ==================== -->
+        <footer class="mini-footer">
+            <div class="container">
+                <div class="mini-footer-inner">
+                    <div class="mini-footer-brand">
+                        <div class="mini-footer-logo">
+                            <svg
+                                width="22"
+                                height="22"
+                                viewBox="0 0 40 40"
+                                fill="none"
+                            >
+                                <defs>
+                                    <linearGradient
+                                        id="fgMark"
+                                        x1="0"
+                                        y1="0"
+                                        x2="40"
+                                        y2="40"
+                                        gradientUnits="userSpaceOnUse"
+                                    >
+                                        <stop
+                                            offset="0%"
+                                            stop-color="#3B82F6"
+                                        />
+                                        <stop
+                                            offset="100%"
+                                            stop-color="#8B5CF6"
+                                        />
+                                    </linearGradient>
+                                </defs>
+                                <path
+                                    d="M20 10 C14 10 8 12 8 14 L8 30 C8 30 14 28 20 30 Z"
+                                    fill="url(#fgMark)"
+                                    opacity="0.9"
+                                />
+                                <path
+                                    d="M20 10 C26 10 32 12 32 14 L32 30 C32 30 26 28 20 30 Z"
+                                    fill="url(#fgMark)"
+                                    opacity="0.6"
+                                />
+                                <line
+                                    x1="20"
+                                    y1="10"
+                                    x2="20"
+                                    y2="30"
+                                    stroke="white"
+                                    stroke-width="1.5"
+                                    stroke-linecap="round"
+                                    opacity="0.8"
+                                />
+                                <circle
+                                    cx="32"
+                                    cy="10"
+                                    r="2.5"
+                                    fill="#F59E0B"
+                                />
+                            </svg>
+                        </div>
+                        <span class="mini-footer-name">PYQ Portal</span>
+                        <span class="mini-footer-sep">·</span>
+                        <span class="mini-footer-copy"
+                            >© 2026 Marian College Kuttikkanam</span
+                        >
                     </div>
+                    <nav class="mini-footer-nav">
+                        <a
+                            href="{{ url_for('view_papers') }}"
+                            class="mini-footer-link"
+                            >Browse</a
+                        >
+                        <a
+                            href="{{ url_for('about') }}"
+                            class="mini-footer-link"
+                            >About</a
+                        >
+                        <button
+                            class="mini-footer-link"
+                            onclick="openPopup('help')"
+                        >
+                            Help
+                        </button>
+                        <button
+                            class="mini-footer-link"
+                            onclick="openPopup('contact')"
+                        >
+                            Contact
+                        </button>
+                    </nav>
+                </div>
+            </div>
+        </footer>
 
-                    <div class="guideline-card info-card">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <line x1="12" y1="16" x2="12" y2="12"></line>
-                            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+        <!-- ==================== POPUP ==================== -->
+        <div class="popup-overlay" id="popupOverlay" onclick="closePopup()">
+            <div class="popup-card" onclick="event.stopPropagation()">
+                <div class="popup-header-band"></div>
+                <div class="popup-body">
+                    <button class="popup-close" onclick="closePopup()">
+                        <svg
+                            width="16"
+                            height="16"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2.5"
+                        >
+                            <line x1="18" y1="6" x2="6" y2="18" />
+                            <line x1="6" y1="6" x2="18" y2="18" />
                         </svg>
-                        <h4>Need Help?</h4>
-                        <p>If you face any issues while uploading, please contact the academic office or email us at pyqportalhelp@gmail.com</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- ==================== FOOTER ==================== -->
-    <footer class="mini-footer">
-        <div class="container">
-            <div class="mini-footer-inner">
-                <div class="mini-footer-brand">
-                    <div class="mini-footer-logo">
-                        <svg width="22" height="22" viewBox="0 0 40 40" fill="none">
-                            <defs>
-                                <linearGradient id="fgMark" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
-                                    <stop offset="0%" stop-color="#3B82F6"/>
-                                    <stop offset="100%" stop-color="#8B5CF6"/>
-                                </linearGradient>
-                            </defs>
-                            <path d="M20 10 C14 10 8 12 8 14 L8 30 C8 30 14 28 20 30 Z" fill="url(#fgMark)" opacity="0.9"/>
-                            <path d="M20 10 C26 10 32 12 32 14 L32 30 C32 30 26 28 20 30 Z" fill="url(#fgMark)" opacity="0.6"/>
-                            <line x1="20" y1="10" x2="20" y2="30" stroke="white" stroke-width="1.5" stroke-linecap="round" opacity="0.8"/>
-                            <circle cx="32" cy="10" r="2.5" fill="#F59E0B"/>
+                    </button>
+                    <div class="popup-icon" id="popupIcon"></div>
+                    <h3 class="popup-title" id="popupTitle"></h3>
+                    <p class="popup-desc" id="popupDesc"></p>
+                    <a
+                        class="popup-mail-btn"
+                        id="popupMailBtn"
+                        href="mailto:pyqportalhelp@gmail.com"
+                    >
+                        <svg
+                            width="18"
+                            height="18"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                        >
+                            <path
+                                d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"
+                            />
+                            <polyline points="22,6 12,13 2,6" />
                         </svg>
-                    </div>
-                    <span class="mini-footer-name">PYQ Portal</span>
-                    <span class="mini-footer-sep">·</span>
-                    <span class="mini-footer-copy">© 2026 Marian College Kuttikkanam</span>
+                        <span id="popupMailLabel">pyqportalhelp@gmail.com</span>
+                    </a>
+                    <p class="popup-tagline">
+                        We usually respond within 24 hours
+                    </p>
                 </div>
-                <nav class="mini-footer-nav">
-                    <a href="{{ url_for('view_papers') }}" class="mini-footer-link">Browse</a>
-                    <a href="{{ url_for('about') }}"       class="mini-footer-link">About</a>
-                    <button class="mini-footer-link" onclick="openPopup('help')">Help</button>
-                    <button class="mini-footer-link" onclick="openPopup('contact')">Contact</button>
-                </nav>
             </div>
         </div>
-    </footer>
 
-    <!-- ==================== POPUP ==================== -->
-    <div class="popup-overlay" id="popupOverlay" onclick="closePopup()">
-        <div class="popup-card" onclick="event.stopPropagation()">
-            <div class="popup-header-band"></div>
-            <div class="popup-body">
-                <button class="popup-close" onclick="closePopup()">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                        <line x1="18" y1="6" x2="6" y2="18"/>
-                        <line x1="6" y1="6" x2="18" y2="18"/>
-                    </svg>
-                </button>
-                <div class="popup-icon" id="popupIcon"></div>
-                <h3 class="popup-title" id="popupTitle"></h3>
-                <p class="popup-desc" id="popupDesc"></p>
-                <a class="popup-mail-btn" id="popupMailBtn" href="mailto:pyqportalhelp@gmail.com">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-                        <polyline points="22,6 12,13 2,6"/>
-                    </svg>
-                    <span id="popupMailLabel">pyqportalhelp@gmail.com</span>
-                </a>
-                <p class="popup-tagline">We usually respond within 24 hours</p>
-            </div>
-        </div>
-    </div>
+        <script src="{{ url_for('static', filename='script.js') }}"></script>
+        <script>
+            /* =====================================================================
+               Bulk Upload Logic
+               ===================================================================== */
 
-    <script src="{{ url_for('static', filename='script.js') }}"></script>
-    <script src="{{ url_for('static', filename='uploadjs.js') }}"></script>
-</body>
+            const SUBJECTS = {{ subjects_json | safe }};
+
+            let entryCount = 0;
+
+            function buildSubjectOptions(selectedId) {
+                let opts = '<option value="">Select Subject</option>';
+                SUBJECTS.forEach(s => {
+                    const sel = (String(s.subject_id) === String(selectedId)) ? 'selected' : '';
+                    const sem = s.semester ? ` (Sem ${s.semester})` : '';
+                    opts += `<option value="${s.subject_id}" ${sel}>${s.subject_name}${sem}</option>`;
+                });
+                return opts;
+            }
+
+            function addPaperEntry(prefill) {
+                entryCount++;
+                const idx = entryCount;
+                const container = document.getElementById('paperEntries');
+
+                const div = document.createElement('div');
+                div.className = 'paper-entry';
+                div.id = `entry-${idx}`;
+
+                div.innerHTML = `
+                    <div class="paper-entry-header">
+                        <span class="paper-entry-title">Paper #${idx}</span>
+                        <button type="button" class="btn-remove-entry" onclick="removeEntry(${idx})" id="remove-${idx}">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                            </svg>
+                            Remove
+                        </button>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Subject <span class="required">*</span></label>
+                            <select name="subject_id_${idx}" class="form-control entry-subject" required>
+                                ${buildSubjectOptions(prefill ? prefill.subject_id : '')}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Year <span class="required">*</span></label>
+                            <select name="year_${idx}" class="form-control" required>
+                                <option value="">Select Year</option>
+                                <option value="2024" ${prefill && prefill.year=='2024'?'selected':''}>2024</option>
+                                <option value="2025" ${prefill && prefill.year=='2025'?'selected':''}>2025</option>
+                                <option value="2026" ${prefill && prefill.year=='2026'?'selected':''}>2026</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Semester <span class="required">*</span></label>
+                            <select name="semester_${idx}" class="form-control" required>
+                                <option value="">Select Semester</option>
+                                ${[1,2,3,4,5,6,7,8].map(n=>`<option value="${n}" ${prefill && prefill.semester==n?'selected':''}>Semester ${n}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Department <span class="required">*</span></label>
+                            <select name="department_${idx}" class="form-control" required>
+                                <option value="">Select Department</option>
+                                <option value="BCA" ${prefill && prefill.department=='BCA'?'selected':''}>BCA</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Exam Type <span class="required">*</span></label>
+                        <select name="examType_${idx}" class="form-control" required>
+                            <option value="">Select Exam Type</option>
+                            <option value="SEA II" ${prefill && prefill.examType=='SEA II'?'selected':''}>SEA II</option>
+                            <option value="SEA I"  ${prefill && prefill.examType=='SEA I'?'selected':''}>SEA I</option>
+                            <option value="ISA"    ${prefill && prefill.examType=='ISA'?'selected':''}>ISA</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">PDF File <span class="required">*</span></label>
+                        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                            <label class="file-label-small" for="file_${idx}">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:4px;">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="17 8 12 3 7 8"></polyline>
+                                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                                </svg>
+                                Choose PDF
+                            </label>
+                            <input type="file" id="file_${idx}" name="file_${idx}" accept=".pdf" required
+                                   style="display:none" onchange="showFileName(this, ${idx})">
+                            <span class="file-name-small" id="fname_${idx}">No file chosen</span>
+                        </div>
+                    </div>
+                `;
+
+                container.appendChild(div);
+                updateUI();
+            }
+
+            function removeEntry(idx) {
+                const el = document.getElementById(`entry-${idx}`);
+                if (el) el.remove();
+                renumberEntries();
+                updateUI();
+            }
+
+            function renumberEntries() {
+                const entries = document.querySelectorAll('.paper-entry');
+                entries.forEach((el, i) => {
+                    const titleEl = el.querySelector('.paper-entry-title');
+                    if (titleEl) titleEl.textContent = `Paper #${i + 1}`;
+                });
+            }
+
+            function showFileName(input, idx) {
+                const span = document.getElementById(`fname_${idx}`);
+                if (input.files && input.files[0]) {
+                    span.textContent = input.files[0].name;
+                    span.classList.add('has-file');
+                } else {
+                    span.textContent = 'No file chosen';
+                    span.classList.remove('has-file');
+                }
+                updateUI();
+            }
+
+            function updateUI() {
+                const entries = document.querySelectorAll('.paper-entry');
+                const count = entries.length;
+
+                document.getElementById('summaryText').textContent =
+                    count === 1 ? '1 paper ready to upload' : `${count} papers ready to upload`;
+
+                entries.forEach(el => {
+                    const btn = el.querySelector('.btn-remove-entry');
+                    if (btn) btn.disabled = (count <= 1);
+                });
+            }
+
+            async function submitBulkUpload() {
+                const entries = document.querySelectorAll('.paper-entry');
+                if (entries.length === 0) return;
+
+                let valid = true;
+                entries.forEach(el => {
+                    const selects = el.querySelectorAll('select[required]');
+                    const fileInput = el.querySelector('input[type="file"]');
+                    selects.forEach(s => { if (!s.value) { s.style.borderColor = '#ef4444'; valid = false; } else { s.style.borderColor = ''; } });
+                    if (!fileInput || !fileInput.files || !fileInput.files[0]) {
+                        const fspan = el.querySelector('.file-name-small');
+                        if (fspan) fspan.style.color = '#ef4444';
+                        valid = false;
+                    }
+                });
+                if (!valid) {
+                    alert('Please fill in all required fields and select a PDF file for each paper.');
+                    return;
+                }
+
+                const submitBtn = document.getElementById('submitBtn');
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="animation:spin 0.8s linear infinite;"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg> Uploading…`;
+
+                if (!document.getElementById('spinStyle')) {
+                    const s = document.createElement('style');
+                    s.id = 'spinStyle';
+                    s.textContent = '@keyframes spin { to { transform: rotate(360deg); } }';
+                    document.head.appendChild(s);
+                }
+
+                const progressWrap = document.getElementById('bulkProgress');
+                const progressBar = document.getElementById('progressBar');
+                const progressText = document.getElementById('progressText');
+                progressWrap.style.display = 'block';
+
+                const total = entries.length;
+                let done = 0;
+                const results = [];
+
+                for (const el of entries) {
+                    const entryId = el.id.replace('entry-', '');
+                    const fd = new FormData();
+
+                    const subjectSel = el.querySelector(`select[name="subject_id_${entryId}"]`);
+                    const yearSel    = el.querySelector(`select[name="year_${entryId}"]`);
+                    const semSel     = el.querySelector(`select[name="semester_${entryId}"]`);
+                    const deptSel    = el.querySelector(`select[name="department_${entryId}"]`);
+                    const examSel    = el.querySelector(`select[name="examType_${entryId}"]`);
+                    const fileInput  = el.querySelector(`input[name="file_${entryId}"]`);
+
+                    fd.append('subject_id', subjectSel.value);
+                    fd.append('year',       yearSel.value);
+                    fd.append('semester',   semSel.value);
+                    fd.append('department', deptSel.value);
+                    fd.append('examType',   examSel.value);
+                    fd.append('file',       fileInput.files[0]);
+
+                    const paperTitle = el.querySelector('.paper-entry-title').textContent;
+                    const fileName   = fileInput.files[0].name;
+
+                    try {
+                        const resp = await fetch('/upload', { method: 'POST', body: fd });
+                        const text = await resp.text();
+                        if (resp.ok && !text.includes('"error"')) {
+                            results.push({ ok: true,  label: `${paperTitle}: ${fileName} — uploaded` });
+                        } else {
+                            let msg = 'Upload failed';
+                            try { msg = JSON.parse(text).error || msg; } catch {}
+                            results.push({ ok: false, label: `${paperTitle}: ${fileName} — ${msg}` });
+                        }
+                    } catch (err) {
+                        results.push({ ok: false, label: `${paperTitle}: ${fileName} — network error` });
+                    }
+
+                    done++;
+                    progressBar.value = Math.round((done / total) * 100);
+                    progressText.textContent = `Uploaded ${done} of ${total}…`;
+                }
+
+                progressWrap.style.display = 'none';
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg> Upload All Papers`;
+
+                const succeeded = results.filter(r => r.ok).length;
+                const failed    = results.filter(r => !r.ok).length;
+
+                const box   = document.getElementById('bulkResultBox');
+                const title = document.getElementById('bulkResultTitle');
+                const list  = document.getElementById('bulkResultList');
+
+                title.textContent = `${succeeded} of ${total} paper${total > 1 ? 's' : ''} uploaded successfully${failed > 0 ? ` (${failed} failed)` : ''}.`;
+                list.innerHTML = results.map(r => `
+                    <li class="${r.ok ? 'ok' : 'fail'}">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            ${r.ok
+                                ? '<polyline points="20 6 9 17 4 12"></polyline>'
+                                : '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>'}
+                        </svg>
+                        ${r.label}
+                    </li>`).join('');
+
+                box.style.display = 'flex';
+                box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+                if (succeeded > 0) {
+                    document.getElementById('paperEntries').innerHTML = '';
+                    entryCount = 0;
+                    addPaperEntry();
+                }
+            }
+
+            /* ── Popup ── */
+            const popupData = {
+                help: {
+                    icon: '🎓', iconBg: 'rgba(59,130,246,0.1)', title: 'Need Help?',
+                    desc: "Having trouble? Drop us an email and we'll get back to you.",
+                    mail: 'mailto:pyqportalhelp@gmail.com?subject=Help Request - PYQ Portal',
+                    label: 'pyqportalhelp@gmail.com'
+                },
+                contact: {
+                    icon: '✉️', iconBg: 'rgba(139,92,246,0.1)', title: 'Get in Touch',
+                    desc: 'Have a suggestion or want to contribute papers? We\'d love to hear from you.',
+                    mail: 'mailto:pyqportalhelp@gmail.com?subject=Contact - PYQ Portal',
+                    label: 'pyqportalhelp@gmail.com'
+                }
+            };
+            function openPopup(type) {
+                const d = popupData[type];
+                const icon = document.getElementById('popupIcon');
+                icon.textContent = d.icon;
+                icon.style.background = d.iconBg;
+                document.getElementById('popupTitle').textContent     = d.title;
+                document.getElementById('popupDesc').textContent      = d.desc;
+                document.getElementById('popupMailBtn').href          = d.mail;
+                document.getElementById('popupMailLabel').textContent = d.label;
+                document.getElementById('popupOverlay').classList.add('active');
+                document.body.style.overflow = 'hidden';
+            }
+            function closePopup() {
+                document.getElementById('popupOverlay').classList.remove('active');
+                document.body.style.overflow = '';
+            }
+            document.addEventListener('keydown', e => { if (e.key === 'Escape') closePopup(); });
+
+            /* ── Init: add first entry ── */
+            addPaperEntry();
+        </script>
+    </body>
 </html>
