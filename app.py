@@ -242,6 +242,12 @@ def home():
         return_db(conn)
     return render_template("index.html", paper_count=paper_count)
 
+# ================================================================
+# UPLOAD ROUTE  — replace the existing /upload route in app.py
+# Supports single-paper (legacy) and bulk upload (AJAX loop from
+# the new upload.html template).
+# ================================================================
+
 @app.route("/upload", methods=["GET", "POST"])
 @login_required
 @admin_required
@@ -250,13 +256,24 @@ def upload_page():
         conn = get_db()
         cur = conn.cursor()
         try:
+            # ── Validate subject ──────────────────────────────────────
             subject_raw = request.form.get("subject_id")
-            if not subject_raw or subject_raw.strip() == "":
-                return render_template("upload.html", error="Subject is required", subjects=get_subjects())
+            if not subject_raw or not subject_raw.strip():
+                return render_template(
+                    "upload.html",
+                    error="Subject is required",
+                    subjects=get_subjects(),
+                    subjects_json=_subjects_json()
+                )
             try:
                 subject_id = int(subject_raw)
             except ValueError:
-                return render_template("upload.html", error="Invalid subject", subjects=get_subjects())
+                return render_template(
+                    "upload.html",
+                    error="Invalid subject",
+                    subjects=get_subjects(),
+                    subjects_json=_subjects_json()
+                )
 
             cur.execute(
                 "SELECT subject_id, subject_name FROM subjects WHERE subject_id = %s",
@@ -264,28 +281,55 @@ def upload_page():
             )
             row = cur.fetchone()
             if not row:
-                return render_template("upload.html", error="Subject not found.", subjects=get_subjects())
+                return render_template(
+                    "upload.html",
+                    error="Subject not found.",
+                    subjects=get_subjects(),
+                    subjects_json=_subjects_json()
+                )
             subject_id, subject_name = row[0], row[1]
 
+            # ── Validate year ─────────────────────────────────────────
             year = request.form.get("year")
             try:
                 if not year or not str(year).strip():
                     raise ValueError("Year is required")
-                year_int = int(str(year).split("-", 1)[0].strip()) if "-" in str(year) else int(year)
+                year_int = (
+                    int(str(year).split("-", 1)[0].strip())
+                    if "-" in str(year)
+                    else int(year)
+                )
             except (ValueError, TypeError) as exc:
-                return render_template("upload.html", error=f"Invalid year: {exc}", subjects=get_subjects())
+                return render_template(
+                    "upload.html",
+                    error=f"Invalid year: {exc}",
+                    subjects=get_subjects(),
+                    subjects_json=_subjects_json()
+                )
 
+            # ── Validate file ─────────────────────────────────────────
             file = request.files.get("file")
             if not file or not file.filename:
-                return render_template("upload.html", error="No file provided", subjects=get_subjects())
+                return render_template(
+                    "upload.html",
+                    error="No file provided",
+                    subjects=get_subjects(),
+                    subjects_json=_subjects_json()
+                )
             if not allowed_file(file.filename):
-                return render_template("upload.html", error="Only PDF files are allowed", subjects=get_subjects())
+                return render_template(
+                    "upload.html",
+                    error="Only PDF files are allowed",
+                    subjects=get_subjects(),
+                    subjects_json=_subjects_json()
+                )
 
             exam_type = request.form.get("examType") or request.form.get("exam_type") or ""
 
-            # ---------- Azure Blob Upload ----------
+            # ── Upload to Azure Blob ──────────────────────────────────
             unique_name = f"{subject_id}/{year_int}/{uuid.uuid4()}.pdf"
             file_data = file.read()
+
             blob_client = blob_service_client.get_blob_client(
                 container=AZURE_CONTAINER,
                 blob=unique_name
@@ -295,13 +339,18 @@ def upload_page():
                 overwrite=True,
                 content_settings=ContentSettings(content_type="application/pdf")
             )
-            file_url = f"https://{blob_service_client.account_name}.blob.core.windows.net/{AZURE_CONTAINER}/{unique_name}"
+            file_url = (
+                f"https://{blob_service_client.account_name}"
+                f".blob.core.windows.net/{AZURE_CONTAINER}/{unique_name}"
+            )
 
             original_filename = secure_filename(file.filename)
+
+            # ── Insert into DB ────────────────────────────────────────
             cur.execute(
                 """
                 INSERT INTO question_papers
-                (subject_id, year, file_name, file_url, exam_type, public_id)
+                    (subject_id, year, file_name, file_url, exam_type, public_id)
                 VALUES (%s, %s, %s, %s, %s, %s)
                 RETURNING paper_id
                 """,
@@ -309,18 +358,45 @@ def upload_page():
             )
             conn.commit()
 
+            # ── Respond ───────────────────────────────────────────────
+            # AJAX callers (new bulk form) expect a JSON-friendly 200.
+            # Legacy HTML form callers expect a flash + redirect.
+            if request.headers.get("X-Requested-With") == "XMLHttpRequest" or \
+               request.accept_mimetypes.best == "application/json":
+                return jsonify({"message": "Uploaded successfully."}), 200
+
             flash("Question paper uploaded successfully.")
             return redirect(url_for("upload_page"))
 
         except Exception as e:
             conn.rollback()
             app.logger.exception("Upload failed")
-            return render_template("upload.html", error=str(e), subjects=get_subjects())
+            if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                return jsonify({"error": str(e)}), 500
+            return render_template(
+                "upload.html",
+                error=str(e),
+                subjects=get_subjects(),
+                subjects_json=_subjects_json()
+            )
         finally:
             cur.close()
             return_db(conn)
 
-    return render_template("upload.html", subjects=get_subjects())
+    # ── GET ───────────────────────────────────────────────────────────
+    return render_template(
+        "upload.html",
+        subjects=get_subjects(),
+        subjects_json=_subjects_json()
+    )
+
+
+# ── Helper: subjects as JSON string for the template ─────────────────
+def _subjects_json():
+    import json
+    subjects = get_subjects()
+    return json.dumps(subjects)
+
 
 @app.route("/papers")
 def view_papers():
