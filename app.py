@@ -4,7 +4,7 @@ import os
 import psycopg2
 import time
 from psycopg2 import pool
-from supabase import create_client
+from azure.storage.blob import BlobServiceClient, ContentSettings
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
@@ -20,7 +20,6 @@ app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'dev_secret_key')
 Compress(app)
 
-
 load_dotenv()
 client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
 limiter = Limiter(
@@ -31,11 +30,10 @@ limiter = Limiter(
 )
 request_log = {}
 
-# ---------- Supabase ----------
-SUPABASE_URL = os.environ.get("SUPABASE_URL")
-SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
-SUPABASE_BUCKET = os.environ.get("SUPABASE_BUCKET")
-supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+# ---------- Azure Blob Storage ----------
+AZURE_STORAGE_CONNECTION_STRING = os.environ.get("AZURE_STORAGE_CONNECTION_STRING")
+AZURE_CONTAINER = os.environ.get("AZURE_CONTAINER", "question-papers")
+blob_service_client = BlobServiceClient.from_connection_string(AZURE_STORAGE_CONNECTION_STRING)
 
 # ---------- DB (Connection Pool) ----------
 db_pool = pool.SimpleConnectionPool(1, 10, os.environ.get("DATABASE_URL"))
@@ -285,13 +283,19 @@ def upload_page():
 
             exam_type = request.form.get("examType") or request.form.get("exam_type") or ""
 
+            # ---------- Azure Blob Upload ----------
             unique_name = f"{subject_id}/{year_int}/{uuid.uuid4()}.pdf"
-            supabase.storage.from_(SUPABASE_BUCKET).upload(
-                unique_name,
-                file.read(),
-                file_options={"content-type": "application/pdf"}
+            file_data = file.read()
+            blob_client = blob_service_client.get_blob_client(
+                container=AZURE_CONTAINER,
+                blob=unique_name
             )
-            file_url = supabase.storage.from_(SUPABASE_BUCKET).get_public_url(unique_name)
+            blob_client.upload_blob(
+                file_data,
+                overwrite=True,
+                content_settings=ContentSettings(content_type="application/pdf")
+            )
+            file_url = f"https://{blob_service_client.account_name}.blob.core.windows.net/{AZURE_CONTAINER}/{unique_name}"
 
             original_filename = secure_filename(file.filename)
             cur.execute(
@@ -686,9 +690,14 @@ def admin_delete_paper(paper_id):
 
         public_id = row[0]
 
+        # ---------- Azure Blob Delete ----------
         if public_id:
             try:
-                supabase.storage.from_(SUPABASE_BUCKET).remove([public_id])
+                blob_client = blob_service_client.get_blob_client(
+                    container=AZURE_CONTAINER,
+                    blob=public_id
+                )
+                blob_client.delete_blob()
             except Exception:
                 pass
 
